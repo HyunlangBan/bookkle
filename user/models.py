@@ -5,6 +5,7 @@ class User(models.Model):
     nickname = models.CharField(max_length=50, null = False, unique = True)
     password = models.CharField(max_length=300, null = False)
     follow = models.ManyToManyField('self', symmetrical = False, through = 'Following', related_name='followed')
+    follower_count = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'users'
