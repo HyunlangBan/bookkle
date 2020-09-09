@@ -1,3 +1,16 @@
-from django.shortcuts import render
+from django.db.models import Count
+from rest_framework import viewsets
+from review.serializers import ReviewListSerializer 
+from review.models import Review, Recommand
+from rest_framework.response import Response
+import datetime
 
-# Create your views here.
+class ReviewViewSet(viewsets.ModelViewSet):
+#### TEST 데이터에 맞추기 위해 잠시 커맨트처리ㅓ
+#    DAYS = 30
+#    posted_time = datetime.datetime.now() - datetime.timedelta(DAYS)
+#    now = datetime.datetime.now()
+#    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-recommand_count')
+
+    queryset = Review.objects.order_by('-recommand_count')
+    serializer_class = ReviewListSerializer 
