@@ -1,8 +1,9 @@
 from django.core.management.base import BaseCommand
 from review.models import Book, Review
+from user.models import User
 from django_seed import Seed
 import random
-from user.models import User
+
 
 class Command(BaseCommand):
 

@@ -20,18 +20,13 @@ class BookSerializer(serializers.ModelSerializer):
         model = Book
         fields = '__all__'
 
-class ReviewCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Review
-        exclude = ['recommand_count']
-
 class ReviewListSerializer(serializers.ModelSerializer):
-    book_detail = BookSerializer(source='book', read_only = True)
+    book_detail = BookSerializer(source='book')
     user_info = UserProfileSerializer(source='user', read_only = True)
 
     class Meta:
         model = Review
-        fields = ['id','title', 'book', 'user', 'content', 'rating','quote', 'recommand_count', 'book_detail', 'user_info']
+        fields = ['id', 'title', 'content', 'rating','quote', 'recommand_count', 'book_detail', 'user_info']
         read_only_fields = ['recommand_count']
 
 

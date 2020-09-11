@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
-from django_seed import Seed
 from user.models import User
+from django_seed import Seed
+
 
 class Command(BaseCommand):
 
