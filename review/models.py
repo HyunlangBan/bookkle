@@ -9,7 +9,6 @@ class Review(models.Model):
     recommand_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
-
     book = models.ForeignKey('Book', on_delete = models.CASCADE)
     user = models.ForeignKey(User, on_delete = models.CASCADE)
     recommander = models.ManyToManyField(User, blank = True, through ='Recommand', related_name='review_like')
@@ -28,7 +27,7 @@ class Recommand(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length = 100)
     author = models.CharField(max_length = 50)
-    image = models.URLField()
+    image = models.URLField(null = True)
 
     class Meta:
         db_table = 'books'
