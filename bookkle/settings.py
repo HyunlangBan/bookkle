@@ -37,16 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-#     'django.contrib.sites',
-#     'allauth',
-#     'allauth.account',
-#     'allauth.socialaccount',
     'rest_framework',
     'django_seed',
     'user',
     'review',
 ]
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -119,29 +114,3 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 4 
 }
-
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend', 
-)
-
-AUTH_USER_MODEL = 'user.User'
-
-# SITE_ID = 1
-# 
-# ACCOUNT_AUTHENTICATION_METHOD = 'email'
-# ACCOUNT_EMAIL_REQUIRED = True
-# ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-# ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-# ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
-# ACCOUNT_USER_MODEL_USERNAME_FIELD = 'nickname'
-# ACCOUNT_USERNAME_REQUIRED = True
-# LOGIN_REDIRECT_URL='/'
-
-EMAIL_BACKEND = my_settings.EMAIL['EMAIL_BACKEND'] 
-EMAIL_USE_TLS =  my_settings.EMAIL['EMAIL_USE_TLS'] 
-EMAIL_PORT = my_settings.EMAIL['EMAIL_PORT']
-EMAIL_HOST = my_settings.EMAIL['EMAIL_HOST'] 
-EMAIL_HOST_USER = my_settings.EMAIL['EMAIL_HOST_USER']
-EMAIL_HOST_PASSWORD = my_settings.EMAIL['EMAIL_HOST_PASSWORD']
-SERVER_EMAIL = my_settings.EMAIL['SERVER_EMAIL']

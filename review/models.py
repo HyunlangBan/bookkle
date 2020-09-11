@@ -9,6 +9,7 @@ class Review(models.Model):
     recommand_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
+
     book = models.ForeignKey('Book', on_delete = models.CASCADE)
     user = models.ForeignKey(User, on_delete = models.CASCADE)
     recommander = models.ManyToManyField(User, blank = True, through ='Recommand', related_name='review_like')
