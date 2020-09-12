@@ -4,12 +4,13 @@ from rest_framework.routers import DefaultRouter
 from django.conf.urls import url
 from django.contrib import admin
 
-router = DefaultRouter()
-router.register(r'review', ReviewViewSet, basename='review')
+router = DefaultRouter(trailing_slash=False)
+router.register(r'reviews', ReviewViewSet, basename='review')
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^accounts/', include('user.urls')),
+    url(r'^admin', admin.site.urls),
+    url(r'^accounts', include('user.urls')),
+    url(r'^reviews', include('review.urls')),
 ]
 urlpatterns += router.urls
 

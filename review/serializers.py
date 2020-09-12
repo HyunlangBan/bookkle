@@ -27,7 +27,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        exclude = ['recommand_count']
+        exclude = ['recommand_count', 'user', 'book', 'recommander']
 
 class ReviewListSerializer(serializers.ModelSerializer):
     book_detail = BookSerializer(source='book')

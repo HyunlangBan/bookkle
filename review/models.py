@@ -4,7 +4,7 @@ from user.models import User
 class Review(models.Model):
     title = models.CharField(max_length = 100)
     content = models.CharField(max_length = 800)
-    quote = models.CharField(max_length = 200, null = True)
+    quote = models.CharField(max_length = 100, null = True)
     rating = models.IntegerField()
     recommand_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add = True)
@@ -27,6 +27,7 @@ class Recommand(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length = 100)
     author = models.CharField(max_length = 50)
+    quote = models.CharField(max_length = 100)
     image = models.URLField(null = True)
 
     class Meta:
