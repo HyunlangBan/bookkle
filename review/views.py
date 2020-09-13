@@ -1,15 +1,27 @@
+import datetime
+import random
+
 from django.db.models import Count
+
 from rest_framework import viewsets, status, permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.authentication import (
-        SessionAuthentication,
-        TokenAuthentication
+    SessionAuthentication,
+    TokenAuthentication
 )
-from review.serializers import ReviewListSerializer, ReviewCreateSerializer
-from review.models import Review, Recommand, Book
+
+from review.serializers import ( 
+    ReviewListSerializer, 
+    ReviewCreateSerializer
+)
+from review.models import (
+    Review, 
+    Recommand, 
+    Book
+)
 from user.models import User
-from rest_framework.response import Response
-import datetime
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -25,7 +37,25 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
         serializer_class = ReviewCreateSerializer(data=data)
-        serializer_class.is_valid()
-        book = Book.objects.get_or_create(title=data['book_title'], author=data['book_author'], image=data['book_image'])[0]
-        Review.objects.create(book=book, title = data['title'], content = data['content'], rating = data['rating'], quote = data['quote'], user=request.user)
-        return Response(serializer_class.data)
+        if serializer_class.is_valid():
+            book = Book.objects.get_or_create(title=data['book_title'], author=data['book_author'], image=data['book_image'])[0]
+            review = Review.objects.create(book=book, title = data['title'], content = data['content'], rating = data['rating'], quote = data['quote'], user=request.user)
+            result = serializer_class.data.copy()
+            result['review_id'] = review.id
+            return Response(result)
+        return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RandomQuoteView(APIView):
+    def get(slef, request):
+        queryset = Review.objects.filter(quote__isnull = False)
+        try:
+            today_book = random.choice(queryset)
+            quote = today_book.quote
+            title = today_book.book.title
+            author = today_book.book.author
+            return Response({"quote": quote, "book_title":title, "book_author": author})
+        except IndexError:
+            return Response({"quote": "Welcome to Bookkle!"})
+    
+

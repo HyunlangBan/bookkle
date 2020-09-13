@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--number", default=1, help="How many do you want create User"
+            "--number", default=1, help="How many do you want create Book"
         )
 
     def handle(self, *args, **options):

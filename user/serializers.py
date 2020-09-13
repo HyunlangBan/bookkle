@@ -19,11 +19,4 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
-
-    def field_check(self, data):
-        if User.objects.filter(email=data['email']).exists():
-            raise serializers.ValidationError("Duplicated Email")
-        elif User.objects.filter(nickname=data['nickname']).exists():
-            raise serializers.ValidationError("Duplicated Nickname")
-        return True
+        fields = '__all__' 

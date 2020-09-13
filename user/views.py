@@ -16,17 +16,18 @@ from user.serializers import UserSerializer, LoginSerializer
 from user.models import User
 from user.token import account_activation_token 
 from user.text import message
-from my_settings import EMAIL
+from my_settings import EMAIL, DOMAIN
 
 
 class SignUpView(APIView):
     def post(self, request):
         data = request.data
         serializer_class = UserSerializer(data=data) 
-        if serializer_class.is_valid() and serializer_class.field_check(data):
+        if serializer_class.is_valid(): 
             user = User.objects.create_user(data['email'], data['nickname'], data['password'])
             current_site = get_current_site(request)
-            domain = current_site.domain
+            #domain = current_site.domain
+            domain = DOMAIN
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
             message_data = message(domain, uidb64, token)
@@ -36,7 +37,7 @@ class SignUpView(APIView):
             email = EmailMessage(mail_title, message_data, to=[mail_to])
             email.send()
             return Response({"message":"SUCCESS"})
-        return Response({"message":"KEY_ERROR"})
+        return Response(serializer_class.errors, status=status.HTTP_409_CONFLICT)
 
 
 class Activate(APIView):
@@ -64,4 +65,4 @@ class LoginView(APIView):
             user = serializer_class.validated_data
             token = Token.objects.get_or_create(user=user)
             return Response({"token": str(token[0])})
-        return Response({"error":"INVALID_USER"})
+        return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
