@@ -3,15 +3,10 @@ import random
 
 from django.db.models import Count
 
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.authentication import (
-    SessionAuthentication,
-    TokenAuthentication
-)
-
+# from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from review.serializers import ( 
     ReviewListSerializer, 
     ReviewCreateSerializer
@@ -22,6 +17,7 @@ from review.models import (
     Book
 )
 from user.models import User
+from user.permissions import IsReviewAuthorOrReadOnly
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -30,10 +26,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
 #    posted_time = datetime.datetime.now() - datetime.timedelta(DAYS)
 #    now = datetime.datetime.now()
 #    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-recommand_count')
-    permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Review.objects.order_by('-recommand_count')
     serializer_class = ReviewListSerializer
-
+    permission_classes = [IsReviewAuthorOrReadOnly]
+    
     def create(self, request, *args, **kwargs):
         data = request.data
         serializer_class = ReviewCreateSerializer(data=data)
