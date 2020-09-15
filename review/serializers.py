@@ -1,9 +1,10 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from review.models import (
     Book,
     Review,
-    Recommand
+    Like
 )
 from user.models import (
     User,
@@ -27,7 +28,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        exclude = ['recommand_count', 'user', 'book', 'recommander']
+        exclude = ['like_count', 'user', 'book', 'liker']
 
 class ReviewListSerializer(serializers.ModelSerializer):
     book_detail = BookSerializer(source='book')
@@ -35,14 +36,13 @@ class ReviewListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ['id', 'title', 'content', 'rating','quote', 'recommand_count', 'book_detail', 'user_info']
-        read_only_fields = ['recommand_count']
-
+        fields = ['id', 'title', 'content', 'rating','quote', 'like_count', 'book_detail', 'user_info']
+        read_only_fields = ['like_count']
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        exclude = ['recommand_count', 'created_at', 'updated_at', 'book', 'user']
+        exclude = ['like_count', 'created_at', 'updated_at', 'book', 'user']
 
         def update(self, instance, validated_data):
             instance.title = validated_data.get('title', instance.title)
@@ -50,3 +50,15 @@ class ReviewSerializer(serializers.ModelSerializer):
             instance.quote = validated_data.get('quote', instance.quote)
             instance.rating = validated_data.get('rating', instance.rating)
             return instance
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Like.objects.all(),
+                fields=['review', 'user'],
+                message = "Duplicated Like"
+            )
+        ]
