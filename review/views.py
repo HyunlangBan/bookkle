@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 # from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from review.serializers import ( 
+    ReviewSerializer,
     ReviewListSerializer, 
     ReviewCreateSerializer
 )
@@ -40,6 +41,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
             result['review_id'] = review.id
             return Response(result)
         return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, **kwargs):
+        data = request.data
+        review = Review.objects.get(id = kwargs['pk'])
+        serializer_class = ReviewSerializer(review, data = data)
+        if serializer_class.is_valid():
+            serializer_class.save()
+            return Response(serializer_class.data)
 
 
 class RandomQuoteView(APIView):
