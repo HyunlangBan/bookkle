@@ -27,7 +27,6 @@ class Recommand(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length = 100)
     author = models.CharField(max_length = 50)
-    quote = models.CharField(max_length = 100)
     image = models.URLField(null = True)
 
     class Meta:

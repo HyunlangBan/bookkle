@@ -39,4 +39,14 @@ class ReviewListSerializer(serializers.ModelSerializer):
         read_only_fields = ['recommand_count']
 
 
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        exclude = ['recommand_count', 'created_at', 'updated_at', 'book', 'user']
 
+        def update(self, instance, validated_data):
+            instance.title = validated_data.get('title', instance.title)
+            instance.content = validated_data.get('content', instance.content)
+            instance.quote = validated_data.get('quote', instance.quote)
+            instance.rating = validated_data.get('rating', instance.rating)
+            return instance
