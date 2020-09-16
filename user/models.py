@@ -45,6 +45,7 @@ class User(AbstractBaseUser,PermissionsMixin):
         unique=True
     )     
     follower_count = models.IntegerField(default = 0)
+    following = models.ManyToManyField('User', through='Follow', blank=True, related_name='followed')
 
     is_active = models.BooleanField(default=False)    
     is_admin = models.BooleanField(default=False)    
@@ -57,11 +58,11 @@ class User(AbstractBaseUser,PermissionsMixin):
 
 
 
-class Following(models.Model):
-    follow_from = models.ForeignKey('User', on_delete = models.CASCADE, null = True, related_name = 'following')
-    follow_to = models.ForeignKey('User', on_delete = models.CASCADE, null = True, related_name = 'follower')
+class Follow(models.Model):
+    follow_from = models.ForeignKey('User', on_delete = models.CASCADE, null = True, related_name = 'follow_to')
+    follow_to = models.ForeignKey('User', on_delete = models.CASCADE, null = True, related_name = 'follow_from')
 
     class Meta:
-        db_table = 'following'
+        db_table = 'follows'
         unique_together = ('follow_from', 'follow_to')
     

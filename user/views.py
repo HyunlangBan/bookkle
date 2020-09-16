@@ -1,4 +1,9 @@
-from rest_framework import viewsets, status, generics, permissions
+from rest_framework import (
+    viewsets, 
+    status, 
+    generics, 
+    permissions
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,10 +18,15 @@ from django.core.exceptions import ValidationError
 from django.utils.encoding import force_bytes, force_text
 from django.contrib.auth import get_user_model
 
-from user.serializers import UserSerializer, LoginSerializer, UserProfileSerializer
+from user.serializers import (
+    UserSerializer, 
+    LoginSerializer, 
+    UserProfileSerializer
+)
 from user.models import User
 from user.token import account_activation_token 
 from user.text import message
+from user.permissions import IsReviewAuthorOrReadOnly
 from my_settings import EMAIL, DOMAIN
 from review.models import Review
 from review.serializers import ReviewListSerializer
@@ -67,21 +77,19 @@ class LoginView(APIView):
         if serializer_class.is_valid(raise_exception = True):
             user = serializer_class.validated_data
             token = Token.objects.get_or_create(user=user)
-            return Response({"token": str(token[0])})
+            return Response({"token": str(token[0]), "user_id": user.id})
         return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MyReviewView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ReviewListSerializer
 
-    def get_queryset(self):
-        queryset = Review.objects.filter(user = self.request.user)
+    def get_queryset(self, **kwargs):
+        queryset = Review.objects.filter(user_id = self.kwargs['pk'])
         return queryset
 
 
 class UserProfileView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
-    def retrieve(self, request):
-        user = User.objects.get(id = request.user.id)
+    def retrieve(self, request, **kwargs):
+        user = User.objects.get(id = self.kwargs['pk'])
         serializer_class = UserProfileSerializer(user)
         return Response(serializer_class.data)
