@@ -4,17 +4,17 @@ from rest_framework.validators import UniqueTogetherValidator
 from review.models import (
     Book,
     Review,
-    Like
+    Recommend
 )
 from user.models import (
     User,
-    Following
+    Follow
 )
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['nickname']
+        fields = ['id', 'nickname']
 
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,7 +28,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        exclude = ['like_count', 'user', 'book', 'liker']
+        exclude = ['recommend_count', 'user', 'book', 'recommender']
 
 class ReviewListSerializer(serializers.ModelSerializer):
     book_detail = BookSerializer(source='book')
@@ -36,13 +36,13 @@ class ReviewListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ['id', 'title', 'content', 'rating','quote', 'like_count', 'book_detail', 'user_info']
-        read_only_fields = ['like_count']
+        fields = ['id', 'title', 'content', 'rating','quote', 'recommend_count', 'book_detail', 'user_info']
+        read_only_fields = ['recommend_count']
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        exclude = ['like_count', 'created_at', 'updated_at', 'book', 'user']
+        exclude = ['recommend_count', 'created_at', 'updated_at', 'book', 'user']
 
         def update(self, instance, validated_data):
             instance.title = validated_data.get('title', instance.title)
@@ -51,14 +51,14 @@ class ReviewSerializer(serializers.ModelSerializer):
             instance.rating = validated_data.get('rating', instance.rating)
             return instance
 
-class LikeSerializer(serializers.ModelSerializer):
+class RecommendSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Like
+        model = Recommend
         fields = '__all__'
         validators = [
             UniqueTogetherValidator(
-                queryset=Like.objects.all(),
+                queryset=Recommend.objects.all(),
                 fields=['review', 'user'],
-                message = "Duplicated Like"
+                message = "Duplicated Recommend"
             )
         ]

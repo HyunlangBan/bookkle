@@ -16,11 +16,11 @@ from review.serializers import (
     ReviewSerializer,
     ReviewListSerializer, 
     ReviewCreateSerializer,
-    LikeSerializer
+    RecommendSerializer
 )
 from review.models import (
     Review, 
-    Like, 
+    Recommend, 
     Book
 )
 from user.models import User
@@ -32,8 +32,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
 #    DAYS = 30
 #    posted_time = datetime.datetime.now() - datetime.timedelta(DAYS)
 #    now = datetime.datetime.now()
-#    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-like_count')
-    queryset = Review.objects.order_by('-like_count')
+#    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-recommend_count')
+    queryset = Review.objects.order_by('-recommend_count')
     serializer_class = ReviewListSerializer
     #permission_classes = [IsReviewAuthorOrReadOnly]
     
@@ -54,6 +54,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
             serializer_class.save()
             return Response(serializer_class.data)
 
+    def destroy(self, request, **kwargs):
+        try:
+            Review.objects.get(id = kwargs['pk']).delete()
+            reviews = Review.objects.filter(user = request.user)
+            page = self.paginate_queryset(reviews)
+            serializer_class = ReviewListSerializer(page, many=True)
+            return self.get_paginated_response(serializer_class.data)
+        except Review.DoesNotExist:
+            return Response({"message": "DOES NOT EXIST"}, status = status.HTTP_400_BAD_REQUEST)
+            
 
 class RandomQuoteView(APIView):
     def get(self, request):
@@ -68,20 +78,20 @@ class RandomQuoteView(APIView):
             return Response({"quote": "Welcome to Bookkle!"})
     
 
-class LikeView(generics.CreateAPIView):
+class RecommendView(generics.CreateAPIView):
    permission_classes = [IsAuthenticated]
 
    def create(self, request):
        data = request.data.copy()
        data['user'] = request.user.id
-       serializer_class = LikeSerializer(data = data)
+       serializer_class = RecommendSerializer(data = data)
        review = Review.objects.get(id = data['review'])
        if serializer_class.is_valid():
            serializer_class.save()
-           review.like_count += 1
+           review.recommend_count += 1
            review.save()
-           return Response({"like_count": review.like_count})
-       Like.objects.get(user=request.user, review=review).delete()
-       review.like_count -= 1
+           return Response({"recommend_count": review.recommend_count})
+       Recommend.objects.get(user=request.user, review=review).delete()
+       review.recommend_count -= 1
        review.save()
-       return Response({"undo_like_count": review.like_count})
+       return Response({"undo_recommend_count": review.recommend_count})
