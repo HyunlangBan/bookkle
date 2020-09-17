@@ -33,9 +33,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
 #    posted_time = datetime.datetime.now() - datetime.timedelta(DAYS)
 #    now = datetime.datetime.now()
 #    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-recommend_count')
-    queryset = Review.objects.order_by('-recommend_count')
+    queryset = Review.objects.order_by('-recommend_count', 'created_at')
     serializer_class = ReviewListSerializer
-    #permission_classes = [IsReviewAuthorOrReadOnly]
+    permission_classes = [IsReviewAuthorOrReadOnly]
     
     def create(self, request):
         data = request.data
@@ -54,16 +54,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
             serializer_class.save()
             return Response(serializer_class.data)
 
-    def destroy(self, request, **kwargs):
-        try:
-            Review.objects.get(id = kwargs['pk']).delete()
-            reviews = Review.objects.filter(user = request.user)
-            page = self.paginate_queryset(reviews)
-            serializer_class = ReviewListSerializer(page, many=True)
-            return self.get_paginated_response(serializer_class.data)
-        except Review.DoesNotExist:
-            return Response({"message": "DOES NOT EXIST"}, status = status.HTTP_400_BAD_REQUEST)
-            
 
 class RandomQuoteView(APIView):
     def get(self, request):
@@ -78,7 +68,7 @@ class RandomQuoteView(APIView):
             return Response({"quote": "Welcome to Bookkle!"})
     
 
-class RecommendView(generics.CreateAPIView):
+class RecommendToggleView(generics.CreateAPIView):
    permission_classes = [IsAuthenticated]
 
    def create(self, request):
@@ -90,8 +80,18 @@ class RecommendView(generics.CreateAPIView):
            serializer_class.save()
            review.recommend_count += 1
            review.save()
-           return Response({"recommend_count": review.recommend_count})
+           return Response({"message": "SUCCESS"})
        Recommend.objects.get(user=request.user, review=review).delete()
        review.recommend_count -= 1
        review.save()
-       return Response({"undo_recommend_count": review.recommend_count})
+       return Response({"message": "REDO LIKE SUCCESS"})
+
+class FollowingReviewView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReviewListSerializer
+
+    def get_queryset(self):
+        following = self.request.user.following.prefetch_related('review_set')
+        queryset = Review.objects.filter(user__in = following).order_by('created_at')
+        return queryset
+    
