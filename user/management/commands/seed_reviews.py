@@ -26,7 +26,7 @@ class Command(BaseCommand):
             number,
             {
                 "rating": lambda x: random.randint(0, 3),
-                "recommand_count": lambda x: random.randint(0, 20),              
+                "recommend_count": lambda x: random.randint(0, 20),              
                 "user": lambda x: random.choice(users),
                 "book": lambda x: random.choice(books),
             },

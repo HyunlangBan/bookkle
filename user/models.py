@@ -59,8 +59,8 @@ class User(AbstractBaseUser,PermissionsMixin):
 
 
 class Follow(models.Model):
-    follow_from = models.ForeignKey('User', on_delete = models.CASCADE, null = True, related_name = 'follow_to')
-    follow_to = models.ForeignKey('User', on_delete = models.CASCADE, null = True, related_name = 'follow_from')
+    follow_from = models.ForeignKey('User', on_delete = models.CASCADE, null = False, related_name = 'follow_to')
+    follow_to = models.ForeignKey('User', on_delete = models.CASCADE, null = False, related_name = 'follow_from')
 
     class Meta:
         db_table = 'follows'

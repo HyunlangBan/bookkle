@@ -21,16 +21,16 @@ from django.contrib.auth import get_user_model
 from user.serializers import (
     UserSerializer, 
     LoginSerializer, 
-    UserProfileSerializer
+    UserProfileSerializer,
+    FollowSerializer
 )
-from user.models import User
+from user.models import User, Follow
 from user.token import account_activation_token 
 from user.text import message
 from user.permissions import IsReviewAuthorOrReadOnly
 from my_settings import EMAIL, DOMAIN
 from review.models import Review
 from review.serializers import ReviewListSerializer
-
 
 class SignUpView(generics.CreateAPIView):
     def create(self, request):
@@ -52,7 +52,6 @@ class SignUpView(generics.CreateAPIView):
             return Response({"message":"SUCCESS"})
         return Response(serializer_class.errors, status=status.HTTP_409_CONFLICT)
 
-
 class Activate(APIView):
     def get(self, request, uidb64, token):
         try:
@@ -68,7 +67,7 @@ class Activate(APIView):
         except KeyError:
             return Response({"message": "INVALID_KEY"})
 
-class LoginView(APIView):
+class LoginView(generics.CreateAPIView):
     def post(self, request):
         data = request.data
         email = data['email']
@@ -87,9 +86,28 @@ class MyReviewView(generics.ListAPIView):
         queryset = Review.objects.filter(user_id = self.kwargs['pk'])
         return queryset
 
-
 class UserProfileView(generics.RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+
     def retrieve(self, request, **kwargs):
         user = User.objects.get(id = self.kwargs['pk'])
-        serializer_class = UserProfileSerializer(user)
+        serializer_class = self.get_serializer(user)
         return Response(serializer_class.data)
+
+class FollowToggleView(generics.CreateAPIView):
+    permissions = [IsAuthenticated]
+
+    def create(self, request):
+        data = request.data.copy()
+        data['follow_from'] = request.user.id
+        serializer_class = FollowSerializer(data=data)
+        if serializer_class.is_valid():
+            follow = serializer_class.save()
+            follow.follow_to.follower_count += 1
+            follow.follow_to.save()
+            return Response({"message":"SUCCESS"})
+        follow = Follow.objects.get(follow_from = request.user, follow_to = data['follow_to'])
+        follow.follow_to.follower_count -= 1
+        follow.follow_to.save()
+        follow.delete()
+        return Response({"message": "UNFOLLOW SUCCESS"})
