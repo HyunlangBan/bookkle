@@ -28,12 +28,11 @@ from user.permissions import IsReviewAuthorOrReadOnly
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-#### django-seed TEST 데이터에 맞추기 위해 잠시 커맨트처리
-#    DAYS = 30
-#    posted_time = datetime.datetime.now() - datetime.timedelta(DAYS)
-#    now = datetime.datetime.now()
-#    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-recommend_count')
-    queryset = Review.objects.order_by('-recommend_count', 'created_at')
+    DAYS = 30
+    posted_time = datetime.datetime.now() - datetime.timedelta(DAYS)
+    now = datetime.datetime.now()
+    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-recommend_count')
+#    queryset = Review.objects.order_by('-recommend_count', 'created_at')
     serializer_class = ReviewListSerializer
     permission_classes = [IsReviewAuthorOrReadOnly]
     
@@ -41,8 +40,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
         data = request.data
         serializer_class = ReviewCreateSerializer(data=data)
         if serializer_class.is_valid():
-            book = Book.objects.get_or_create(title=data['book_title'], author=data['book_author'], image=data['book_image'])[0]
-            review = Review.objects.create(book=book, title = data['title'], content = data['content'], rating = data['rating'], quote = data['quote'], user=request.user)
+            book = Book.objects.get_or_create(
+                title=data['book_title'], 
+                author=data['book_author'], 
+                image=data['book_image']
+            )[0]
+            review = Review.objects.create(
+                book=book, 
+                title = data['title'], 
+                content = data['content'], 
+                rating = data['rating'], 
+                quote = data['quote'], 
+                user=request.user
+            )
             return Response({"message": "SUCCESS"})
         return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -54,7 +64,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
             serializer_class.save()
             return Response(serializer_class.data)
 
-
 class RandomQuoteView(APIView):
     def get(self, request):
         queryset = Review.objects.filter(quote__isnull = False)
@@ -63,10 +72,13 @@ class RandomQuoteView(APIView):
             quote = today_book.quote
             title = today_book.book.title
             author = today_book.book.author
-            return Response({"quote": quote, "book_title":title, "book_author": author})
+            return Response({
+                "quote": quote, 
+                "book_title":title, 
+                "book_author": author
+            })
         except IndexError:
             return Response({"quote": "Welcome to Bookkle!"})
-    
 
 class RecommendToggleView(generics.CreateAPIView):
    permission_classes = [IsAuthenticated]

@@ -12,7 +12,10 @@ from rest_framework.authtoken.views import ObtainAuthToken
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.http import (
+    urlsafe_base64_encode, 
+    urlsafe_base64_decode
+)
 from django.core.mail import EmailMessage
 from django.core.exceptions import ValidationError
 from django.utils.encoding import force_bytes, force_text
@@ -76,8 +79,21 @@ class LoginView(generics.CreateAPIView):
         if serializer_class.is_valid(raise_exception = True):
             user = serializer_class.validated_data
             token = Token.objects.get_or_create(user=user)
-            return Response({"token": str(token[0]), "user_id": user.id})
+            response =  Response({"token": str(token[0]), "user_id": user.id})
+            response.set_cookie(
+                'auth_token', 
+                str(token[0]), 
+                expires=(60*60*24*15), 
+                httponly=True
+            )
+            return response
         return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LogoutView(APIView):
+    def post(self, request):
+        response = Response({"message":"LOGGED_OUT"})
+        response.delete_cookie('auth_token')
+        return response
 
 class MyReviewView(generics.ListAPIView):
     serializer_class = ReviewListSerializer
@@ -98,16 +114,22 @@ class FollowToggleView(generics.CreateAPIView):
     permissions = [IsAuthenticated]
 
     def create(self, request):
-        data = request.data.copy()
-        data['follow_from'] = request.user.id
-        serializer_class = FollowSerializer(data=data)
-        if serializer_class.is_valid():
-            follow = serializer_class.save()
-            follow.follow_to.follower_count += 1
+        user = request.user
+        if user.is_authenticated:
+            data = request.data.copy()
+            data['follow_from'] = request.user.id
+            serializer_class = FollowSerializer(data=data)
+            if serializer_class.is_valid():
+                follow = serializer_class.save()
+                follow.follow_to.follower_count += 1
+                follow.follow_to.save()
+                return Response({"message":"SUCCESS"})
+            follow = Follow.objects.get(
+                follow_from = request.user, 
+                follow_to = data['follow_to']
+            )
+            follow.follow_to.follower_count -= 1
             follow.follow_to.save()
-            return Response({"message":"SUCCESS"})
-        follow = Follow.objects.get(follow_from = request.user, follow_to = data['follow_to'])
-        follow.follow_to.follower_count -= 1
-        follow.follow_to.save()
-        follow.delete()
-        return Response({"message": "UNFOLLOW SUCCESS"})
+            follow.delete()
+            return Response({"message": "UNFOLLOW SUCCESS"})
+        return Response({"message": "NEED_LOGIN"}, status = status.HTTP_400_BAD_REQUEST)
