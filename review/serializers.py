@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from rest_framework.fields import CurrentUserDefault
 
 from review.models import (
     Book,
@@ -9,7 +8,6 @@ from review.models import (
 )
 from user.models import (
     User,
-    Follow
 )
 
 class UserProfileSerializer(serializers.ModelSerializer):

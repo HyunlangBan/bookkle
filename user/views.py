@@ -1,17 +1,13 @@
 from rest_framework import (
-    viewsets, 
-    status, 
+    status,
     generics, 
-    permissions
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
 
-from django.contrib.sites.shortcuts import get_current_site
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.utils.http import (
     urlsafe_base64_encode, 
     urlsafe_base64_decode
@@ -19,7 +15,6 @@ from django.utils.http import (
 from django.core.mail import EmailMessage
 from django.core.exceptions import ValidationError
 from django.utils.encoding import force_bytes, force_text
-from django.contrib.auth import get_user_model
 
 from user.serializers import (
     UserSerializer, 
@@ -30,10 +25,10 @@ from user.serializers import (
 from user.models import User, Follow
 from user.token import account_activation_token 
 from user.text import message
-from user.permissions import IsReviewAuthorOrReadOnly
 from my_settings import EMAIL, DOMAIN
 from review.models import Review
 from review.serializers import ReviewListSerializer
+
 
 class SignUpView(generics.CreateAPIView):
     def create(self, request):
@@ -41,8 +36,6 @@ class SignUpView(generics.CreateAPIView):
         serializer_class = UserSerializer(data=data) 
         if serializer_class.is_valid(): 
             user = User.objects.create_user(data['email'], data['nickname'], data['password'])
-            current_site = get_current_site(request)
-            #domain = current_site.domain
             domain = DOMAIN
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
@@ -79,34 +72,21 @@ class LoginView(generics.CreateAPIView):
         if serializer_class.is_valid(raise_exception = True):
             user = serializer_class.validated_data
             token = Token.objects.get_or_create(user=user)
-            response =  Response({"token": str(token[0]), "user_id": user.id})
-            response.set_cookie(
-                'auth_token', 
-                str(token[0]), 
-                expires=(60*60*24*15), 
-                httponly=True
-            )
-            return response
+            return Response({"token": str(token[0]), "user_id": user.id})
         return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class LogoutView(APIView):
-    def post(self, request):
-        response = Response({"message":"LOGGED_OUT"})
-        response.delete_cookie('auth_token')
-        return response
 
 class MyReviewView(generics.ListAPIView):
     serializer_class = ReviewListSerializer
 
     def get_queryset(self, **kwargs):
-        queryset = Review.objects.filter(user_id = self.kwargs['pk'])
+        queryset = Review.objects.filter(user_id = self.kwargs['pk']).order_by('-created_at')
         return queryset
 
 class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer
 
     def retrieve(self, request, **kwargs):
-        user = User.objects.get(id = self.kwargs['pk'])
+        user = get_object_or_404(User, pk=self.kwargs['pk'])
         serializer_class = self.get_serializer(user)
         return Response(serializer_class.data)
 
@@ -132,4 +112,4 @@ class FollowToggleView(generics.CreateAPIView):
             follow.follow_to.save()
             follow.delete()
             return Response({"message": "UNFOLLOW SUCCESS"})
-        return Response({"message": "NEED_LOGIN"}, status = status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "NEED_LOGIN"}, status = status.HTTP_401_UNAUTHORIZED)
