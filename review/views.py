@@ -1,12 +1,9 @@
-import datetime
 import random
 
-from django.db.models import Count
-
+from django.shortcuts import get_object_or_404
 from rest_framework import (
     viewsets, 
     status, 
-    permissions, 
     generics
 )
 from rest_framework.response import Response
@@ -23,18 +20,22 @@ from review.models import (
     Recommend, 
     Book
 )
-from user.models import User
 from user.permissions import IsReviewAuthorOrReadOnly
+
+from datetime import date, timedelta
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    DAYS = 30
-    posted_time = datetime.datetime.now() - datetime.timedelta(DAYS)
-    now = datetime.datetime.now()
-    queryset = Review.objects.filter(created_at__range=[posted_time, now]).order_by('-recommend_count')
-#    queryset = Review.objects.order_by('-recommend_count', 'created_at')
+    DAYS = 15 
+    posted_day = date.today() - timedelta(days = DAYS)
+    queryset = Review.objects.filter(created_at__gte=posted_day).order_by('-recommend_count')
     serializer_class = ReviewListSerializer
     permission_classes = [IsReviewAuthorOrReadOnly]
+
+    def get_object(self):
+        review = get_object_or_404(self.queryset, pk=self.kwargs['pk'])
+        self.check_object_permissions(self.request, review)
+        return review
     
     def create(self, request):
         data = request.data
@@ -50,7 +51,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 title = data['title'], 
                 content = data['content'], 
                 rating = data['rating'], 
-                quote = data['quote'], 
+                quote = data['quote'],
                 user=request.user
             )
             return Response({"message": "SUCCESS"})
@@ -58,11 +59,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def update(self, request, **kwargs):
         data = request.data
-        review = Review.objects.get(id = kwargs['pk'])
+        review = self.get_object()
         serializer_class = ReviewSerializer(review, data = data)
         if serializer_class.is_valid():
             serializer_class.save()
             return Response(serializer_class.data)
+        return Response(serializer_class.errors, status.HTTP_400_BAD_REQUEST)
 
 class RandomQuoteView(APIView):
     def get(self, request):
@@ -96,7 +98,7 @@ class RecommendToggleView(generics.CreateAPIView):
        Recommend.objects.get(user=request.user, review=review).delete()
        review.recommend_count -= 1
        review.save()
-       return Response({"message": "REDO LIKE SUCCESS"})
+       return Response({"message": "LIKE_CANCELLED"})
 
 class FollowingReviewView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
