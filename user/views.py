@@ -57,7 +57,7 @@ class Activate(APIView):
                 user.is_active = True
                 user.save()
                 return redirect(EMAIL['REDIRECT_PAGE'])
-            return Response({"message":"SUCCESS"})
+            return Response({"message":"INVALID_TOKEN"})
         except ValidationError:
             return Response({"message": "TYPE_ERROR"})
         except KeyError:
