@@ -106,6 +106,6 @@ class FollowingReviewView(generics.ListAPIView):
 
     def get_queryset(self):
         following = self.request.user.following.prefetch_related('review_set')
-        queryset = Review.objects.filter(user__in = following).order_by('created_at')
+        queryset = Review.objects.filter(user__in = following).order_by('-created_at')
         return queryset
     

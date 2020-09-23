@@ -3,8 +3,10 @@
 
 my_settings.py
 auto_migration.py
+bookkle.sql
 .idea/*
 */migrations/*
+
 
 ### Vim ###	       
 
