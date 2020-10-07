@@ -1,9 +1,17 @@
 from django.urls import reverse
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import (
+    urlsafe_base64_encode, 
+    urlsafe_base64_decode
+)
+
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from user.models import User, Follow
+from user.token import account_activation_token 
+from my_settings import EMAIL
 
 class SignUpViewTestCase(APITestCase):
 
@@ -150,3 +158,39 @@ class FollowToggleViewTestCase(APITestCase):
         res = self.client.post(reverse('follow'), data)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(res.data['message'], 'NEED_LOGIN')
+        
+class ActivateTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email = "test@email.com",
+            nickname = "nick",
+            password = "test-pwd"
+        )
+
+        self.user2 = User.objects.create_user(
+            email = "test2@email.com",
+            nickname = "guest",
+            password = "test-pwd"
+        )
+
+    def test_activate_user_success(self):
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = account_activation_token.make_token(self.user)
+        res = self.client.get(f'/accounts/activate/{uidb64}/{token}')
+        self.assertRedirects(res, EMAIL['REDIRECT_PAGE'], status_code=302, target_status_code=200, fetch_redirect_response=True)
+        
+    def test_activate_user_not_found_error(self):
+        uidb64 = urlsafe_base64_encode(force_bytes(1000000))
+        token = account_activation_token.make_token(self.user)
+        res = self.client.get(f'/accounts/activate/{uidb64}/{token}')
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        
+
+    def test_activate_user_token_error(self):
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = account_activation_token.make_token(self.user2)
+        res = self.client.get(f'/accounts/activate/{uidb64}/{token}')
+        
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.data['message'], 'INVALID_TOKEN')
+

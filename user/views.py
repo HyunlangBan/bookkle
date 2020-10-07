@@ -52,16 +52,14 @@ class Activate(APIView):
     def get(self, request, uidb64, token):
         try:
             uid = force_text(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
+            user = get_object_or_404(User, pk=uid)
             if account_activation_token.check_token(user, token):
                 user.is_active = True
                 user.save()
                 return redirect(EMAIL['REDIRECT_PAGE'])
-            return Response({"message":"INVALID_TOKEN"})
+            return Response({"message":"INVALID_TOKEN"}, status = status.HTTP_401_UNAUTHORIZED)
         except ValidationError:
-            return Response({"message": "TYPE_ERROR"})
-        except KeyError:
-            return Response({"message": "INVALID_KEY"})
+            return Response({"message": "TYPE_ERROR"}, status = status.HTTP_400_BAD_REQUEST)
 
 class LoginView(generics.CreateAPIView):
     def post(self, request):
